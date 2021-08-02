@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import traceback
-
+from datetime import datetime
 
 def print_len(home_path):
     """
@@ -76,52 +76,59 @@ def create_dataframe(home_path,
         'bh'] = df.ncx * img_size, df.ncy * img_size, df.nbw * img_size, df.nbh * img_size
     df['obj_px'] = df['bw'] * df['bh']
     df['obj_img_ratio'] = df['obj_px'] / df['img_size']
-    print(f'Total Objects in the dataset: {df.shape[0]}')
+    print(f'Total Objects in the dataset: {df.shape[0]}\n')
     return df
 
 
-def draw_pie_chart(dfx):
+def draw_pie_chart(dfx, rd):
     """
     Generate pie chart from the grouped dataframe
     :param dfx:
+    :param rd:
     :return:
     """
+    print('[INFO]: Drawing pie chart for classes...')
     class_distribution = dfx.count()['img_size']
     plt.pie(class_distribution,
             labels=[f'{k}: {v}' for k, v in class_distribution.items()]
             , autopct='%1.1f%%')
     plt.legend(title='Class Distribution')
-    plt.savefig('./results/class_distribution.png')
+    plt.savefig(f'./results/{rd}/class_distribution.png')
     plt.clf()
 
 
-def draw_bar_chart(dfx):
+def draw_bar_chart(dfx, rd):
     """
     Generate horizontal bar charts against your object detection dataset
     :param dfx:
+    :param rd:
     :return:
     """
     # Mean BB Pixel
+    print('[INFO]: Drawing bar chart for mean pixel distribution...')
     dfx.mean()['obj_px'].plot(kind='barh')
     plt.ylabel('pixel size')
-    plt.title('Mean Pixel Size BB')
+    plt.title('Mean Pixel Size BBox')
     plt.legend()
-    plt.savefig('./results/mean_bbpixel_size.png')
+    plt.savefig(f'./results/{rd}/mean_bbpixel_size.png')
     plt.clf()
 
 
-def draw_class_dist(dfx):
+def draw_class_dist(dfx, rd):
     """
     Visualize the distribution of pixels among all the classes
     :param dfx:
+    :param rd:
     :return:
     """
+    print('[INFO]: Drawing classes bbox sizes...')
+    ymax_limit = dfx.count().max()[0]
     for class_name, class_df in dfx:
         class_df['obj_px'].plot(kind='hist', bins=5, rwidth=0.85)
-        plt.ylim(ymax=1000)
+        plt.ylim(ymax=ymax_limit)
         plt.xlabel('BB Size in pixels')
         plt.title(f"Class: '{class_name}' Pixel Variation")
-        plt.savefig(f'./results/bb_px_dist_{class_name}.png')
+        plt.savefig(f'./results/{rd}/bb_px_dist_{class_name}.png')
         plt.clf()
 
 
@@ -133,13 +140,16 @@ def generate_analytics(home_path='./dataset/ts',
     :param img_size:
     :return:
     """
+    print('[INFO]: Pipeline Starting...\n')
     f_list = print_len(home_path)
     df = create_dataframe(home_path=home_path,
                           img_size=img_size,
                           files_list=f_list)
     df_class_grp = df.groupby(['class_name'])
     os.makedirs('./results', exist_ok=True)
-    draw_pie_chart(df_class_grp)
-    draw_bar_chart(df_class_grp)
-    draw_class_dist(df_class_grp)
-    print('Analytics generated successfully, please check the results folder...')
+    res_dir_name = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
+    os.makedirs(f'./results/{res_dir_name}', exist_ok=True)
+    draw_pie_chart(df_class_grp, res_dir_name)
+    draw_bar_chart(df_class_grp, res_dir_name)
+    draw_class_dist(df_class_grp, res_dir_name)
+    print('\n[SUCCESS]: Analytics generated successfully, please check the results folder...\n')
