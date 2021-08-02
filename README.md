@@ -8,8 +8,11 @@ A data visualization library for computer vision
 
 CVDV provides you the full analytics of your object detection dataset formatted according to the YOLO algorithm.
 
+____
+## Running CVDV
+
+____
     python main.py --data_dir ./path/to/dataset --im_size XX
-
+    
 ----------------------------------------
-
 Please provide your feedback.
