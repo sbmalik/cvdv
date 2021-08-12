@@ -6,6 +6,7 @@ import os
 import traceback
 from datetime import datetime
 
+
 def print_len(home_path):
     """
     This function print and create the list of all available files in YOLO format
@@ -133,23 +134,31 @@ def draw_class_dist(dfx, rd):
 
 
 def generate_analytics(home_path='./dataset/ts',
-                       img_size=544):
+                       img_size=None, img_h=None, img_w=None,
+                       details_level='dist'):
     """
     Generate object detection analytics for the given directory
-    :param home_path:
-    :param img_size:
+    :param home_path: Path of the directory containing dataset
+    :param img_size: Images Size (if square)
+    :param img_h: Images Height (if non-square)
+    :param img_w: Images Width (if non-square)
+    :param details_level: Level of details for analysis
     :return:
     """
     print('[INFO]: Pipeline Starting...\n')
     f_list = print_len(home_path)
+
     df = create_dataframe(home_path=home_path,
                           img_size=img_size,
                           files_list=f_list)
+
     df_class_grp = df.groupby(['class_name'])
     os.makedirs('./results', exist_ok=True)
     res_dir_name = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
     os.makedirs(f'./results/{res_dir_name}', exist_ok=True)
+
     draw_pie_chart(df_class_grp, res_dir_name)
     draw_bar_chart(df_class_grp, res_dir_name)
     draw_class_dist(df_class_grp, res_dir_name)
+
     print('\n[SUCCESS]: Analytics generated successfully, please check the results folder...\n')
