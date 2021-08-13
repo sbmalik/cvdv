@@ -1,4 +1,5 @@
 dataset/*
+dataset_subset/*
 .ipynb_checkpoints
 .idea
 */__pycache__
