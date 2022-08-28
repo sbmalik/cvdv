@@ -4,6 +4,7 @@ import os
 import re
 from PIL import Image
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # python3 main.py --data_dir /home/darvis-ml-3/darvis_ml/xperiments/dst_six_1/services/deepstream/exp/dst_python_apps/data/embeddings_root4/
 
@@ -41,6 +42,51 @@ def get_params():
 #################################################
 # Analytics Functions
 #################################################
+def draw_class_dist(dfx, rd):
+    """
+    Visualize the distribution of pixels among all the classes
+    :param dfx:
+    :param rd:
+    :return:
+    """
+    print('[INFO]: Drawing classes images width vs heights sizes...')
+    ymax_limit = dfx.count().max()[0]
+    for class_name, class_df in dfx:
+        class_df.plot(kind='hist', bins=5, rwidth=0.85, subplots=True, )
+        plt.ylim(ymax=ymax_limit)
+        plt.title(f"'{class_name.upper()}'")
+        plt.savefig(f'./results/{rd}/im_wh{class_name}.png')
+        plt.clf()
+
+def draw_pie_chart(dfx, rd):
+    """
+    Generate pie chart from the grouped dataframe
+    :param dfx:
+    :param rd:
+    :return:
+    """
+    print('[INFO]: Drawing pie chart for classes...')
+    class_distribution = dfx.count()['img_w']
+    plt.pie(class_distribution,
+            labels=[f'{k}: {v}' for k, v in class_distribution.items()], autopct='%1.1f%%')
+    plt.legend(title='Class Distribution')
+    plt.savefig(f'./results/{rd}/class_distribution.png')
+    plt.clf()
+
+def draw_bar_chart(dfx, rd):
+    """
+    Generate horizontal bar charts against your object detection dataset
+    :param dfx:
+    :param rd:
+    :return:
+    """
+    # Mean BB Pixel
+    print('[INFO]: Drawing bar chart for mean pixel distribution...')
+    dfx.mean().plot(kind='barh', subplots=True, figsize=(10, 10))
+    # dfx.mean()['img_h'].plot(kind='barh')
+    plt.legend()
+    plt.savefig(f'./results/{rd}/mean_bbpixel_size.png')
+    plt.clf()
 
 def get_current_image(img_path):
     """
@@ -116,6 +162,12 @@ def get_classes_data(home_path=''):
 
 
 def generate_analytics(home_path=''):
+    """
+    Generate analytics for the dataset
+
+    Args:
+        home_path (str, optional): Path to the dataset. Defaults to ''.
+    """
     print('[INFO]: Pipeline Starting...\n')
     cls_data = get_classes_data(home_path)
     df = create_dataframe(cls_data)
@@ -124,6 +176,11 @@ def generate_analytics(home_path=''):
     res_dir_name = datetime.now().strftime("%m_%d_%Y-%H_%M_%S")
     os.makedirs(f'./results/{res_dir_name}', exist_ok=True)
     df.to_csv(f'./results/{res_dir_name}/analysis.csv', index=False)
+    draw_class_dist(df_class_grp, res_dir_name)
+    draw_pie_chart(df_class_grp, res_dir_name)
+    draw_bar_chart(df_class_grp, res_dir_name)
+
+
     print(f"\n[SUCCESS]: Analytics generated successfully,"
           f' please check the results folder...\n')
 
