@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 from PIL import Image
+import argparse
 
 
 #################################################
@@ -160,7 +161,8 @@ def save_obj_images(images, class_name='', bg='white', rd=''):
             start_row = row * (size + 1)
             end_row = (row + 1) * size + row
 
-            display_grid[start_col: end_col, start_row: end_row, :] = channel_image / 255.
+            display_grid[start_col: end_col,
+                         start_row: end_row, :] = channel_image / 255.
 
     scale = 1. / size
     plt.figure(figsize=(scale * display_grid.shape[1],
@@ -240,7 +242,8 @@ def create_dataframe(home_path,
             file_path = os.path.join(home_path, file_name)
 
             if is_all:
-                current_image = get_current_image((get_img_path(home_path, file_name)), img_size)
+                current_image = get_current_image(
+                    (get_img_path(home_path, file_name)), img_size)
                 im_r_mode, im_g_mode, im_b_mode = get_img_vals(current_image)
 
             with open(file_path) as fp:
@@ -250,7 +253,8 @@ def create_dataframe(home_path,
                 for data_list in file_data:
                     data_item = data_list.split(' ')
                     if is_all:
-                        obj_r_mode, obj_g_mode, obj_b_mode = get_obj_coordinates(current_image, data_item)
+                        obj_r_mode, obj_g_mode, obj_b_mode = get_obj_coordinates(
+                            current_image, data_item)
                     try:
                         item_list = [
                             file_path,
@@ -284,7 +288,8 @@ def create_dataframe(home_path,
 
                     except IndexError:
                         print('\nClass names must match with # of objects')
-                        print('Please check your object labels or total of class names.\n')
+                        print(
+                            'Please check your object labels or total of class names.\n')
                         exit(1)
 
     columns_list = get_columns_list()
@@ -313,8 +318,7 @@ def draw_pie_chart(dfx, rd):
     print('[INFO]: Drawing pie chart for classes...')
     class_distribution = dfx.count()['img_size']
     plt.pie(class_distribution,
-            labels=[f'{k}: {v}' for k, v in class_distribution.items()]
-            , autopct='%1.1f%%')
+            labels=[f'{k}: {v}' for k, v in class_distribution.items()], autopct='%1.1f%%')
     plt.legend(title='Class Distribution')
     plt.savefig(f'./results/{rd}/class_distribution.png')
     plt.clf()
@@ -404,3 +408,75 @@ def generate_analytics(home_path='./dataset/ts',
         draw_color_chart(df_class_grp, res_dir_name)
 
     print('\n[SUCCESS]: Analytics generated successfully, please check the results folder...\n')
+
+
+def perform_analysis(var_args):
+    """
+    Perform the analysis on the given dataset
+
+    Args:
+        var_args (dict): Dictionary of arguments
+    """
+    generate_analytics(home_path=var_args.data_dir,
+                       img_size=var_args.im_size, img_h=var_args.im_h, img_w=var_args.im_w,
+                       details_level=var_args.details_level)
+
+#################################################
+# Require Parameters
+#################################################
+
+
+def check_flags(image_size, images_width, images_height):
+    """
+    Check if the given parameters are valid
+
+    Args:
+        image_size (int): total shape/size of the images
+        images_width (int): width of the images
+        images_height (int): height of the images
+    """
+    if image_size is None:
+        if images_width is None or images_height is None:
+            print('\nsize parameters must be defined carefully.')
+            print(
+                'define --im_size in case of square image or define both --img_h & --img_w.\n')
+            exit(1)
+
+
+def get_params():
+    """
+    Get parameters from command line for object detection analysis
+
+    Returns:
+        args: variable containing all the parameters
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir",
+                        help='PATH of the dataset',
+                        required=True)
+    parser.add_argument("--details_level",
+                        help='Details level, dist:distribution or all:objects/images/dist',
+                        default='dist')
+    parser.add_argument("--im_size",
+                        type=int,
+                        help='Single dimension of the dataset image [MUST be Squared]',
+                        default=None)
+    parser.add_argument("--im_h",
+                        type=int,
+                        help='Height of the images',
+                        default=None)
+    parser.add_argument("--im_w",
+                        type=int,
+                        help='Width of the images',
+                        default=None)
+    args = parser.parse_args()
+
+    HOME_PATH = args.data_dir
+    IMAGE_SIZE = args.im_size
+    DETAILS_LEVEL = args.details_level
+    IMAGES_HEIGHT = args.im_h
+    IMAGES_WIDTH = args.im_w
+
+    check_flags(image_size=IMAGE_SIZE, images_width=IMAGES_WIDTH,
+                images_height=IMAGES_HEIGHT,)
+    return args
